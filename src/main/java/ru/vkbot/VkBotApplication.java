@@ -9,15 +9,22 @@ import com.vk.api.sdk.queries.messages.MessagesGetLongPollHistoryQuery;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 
 public class VkBotApplication {
 
-    public static void main(String[] args) throws ClientException, ApiException, InterruptedException {
+    public static void main(String[] args) throws ClientException, ApiException, InterruptedException, IOException {
         VkApiClient api = new VkApiClient(new HttpTransportClient());
-        Integer groupId = 226057952;
-        String accessToken = "vk1.a.3fQa1_ojpYrHtocxiM1GwKssk_IEm-YYKrFQEbMRa5w72Erg3vhFQk0wF5i7ayklazT6UyyUQfUtLETvwauy7yJrq0Yt4D8FIo8_9-s-Kus3FGpZhtfQINYi0qiDHa_FIE-xGDpAxw-41QJ8vCoRzxxtypSP-KInalDMKZwLn02h1S895JW6-7xI_20vnosVULXN2yYEhXTshJEpey0Big";
+
+        Properties properties = new Properties();
+        properties.load(new FileInputStream("src/main/resources/config.properties"));
+        Integer groupId = Integer.parseInt(properties.getProperty("groupId"));
+        String accessToken = properties.getProperty("accessToken");
+
         GroupActor actor = new GroupActor(groupId, accessToken);
         Integer ts = api.messages().getLongPollServer(actor).execute().getTs();
         while (true) {
