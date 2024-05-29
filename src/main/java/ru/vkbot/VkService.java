@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Random;
 
-@Component
+@Service
 public class VkService {
 
     private final VkApiClient vkApiClient;
@@ -27,6 +27,7 @@ public class VkService {
         this.groupActor = groupActor;
     }
 
+//    @Scheduled(cron= "0/1 * * ? * *")
     @EventListener(ApplicationReadyEvent.class)
     public void processMessages() throws ClientException, ApiException, InterruptedException {
         Integer ts = vkApiClient.messages().getLongPollServer(groupActor).execute().getTs();
