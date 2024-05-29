@@ -28,7 +28,7 @@ public class VkService {
     public void processMessages() throws ClientException, ApiException, InterruptedException {
         Integer ts = getTs();
         while (true) {
-            List<Message> messages = getLongPollHistory(ts);
+            List<MessagePojo> messages = convertVkMessages(getLongPollHistory(ts));
             if (!messages.isEmpty()) {
                 messages.forEach(message -> {
                     String inputMessage = message.getText();
@@ -44,13 +44,21 @@ public class VkService {
         }
     }
 
-    public Integer getTs() throws ClientException, ApiException {
+    private Integer getTs() throws ClientException, ApiException {
         return vkApiClient.messages().getLongPollServer(groupActor).execute().getTs();
     }
 
-    public List<Message> getLongPollHistory(Integer ts) throws ApiException, ClientException {
+    private List<Message> getLongPollHistory(Integer ts) throws ApiException, ClientException {
         MessagesGetLongPollHistoryQuery historyQuery = vkApiClient.messages().getLongPollHistory(groupActor).ts(ts);
         return historyQuery.execute().getMessages().getItems();
+    }
+
+    private List<MessagePojo> convertVkMessages(List<Message> vkMessages) {
+        return vkMessages.stream().map(vkMessage -> new MessagePojo(
+                vkMessage.getId(),
+                vkMessage.getFromId(),
+                vkMessage.getText()
+        )).toList();
     }
 
     public void sendMessage(String message, Integer userId) throws ApiException, ClientException {
