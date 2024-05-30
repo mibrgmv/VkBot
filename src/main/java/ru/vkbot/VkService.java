@@ -7,20 +7,30 @@ import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.queries.messages.MessagesGetLongPollHistoryQuery;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Класс, обрабатывающий сообщения получаемый ботом
+ */
 @Service
 @Log4j2
 public class VkService {
 
+    /**
+     * Экземпляр VkVpiClient для взаимодействия с VK API
+     */
     private final VkApiClient vkApiClient;
+    /**
+     * Экземпляр GroupActor представляющий сконфигурированную группу ВК
+     */
     private final GroupActor groupActor;
+    /**
+     * Последнее полученное значние ts, используемое для получения сообщений
+     */
     private Integer ts;
 
     public VkService(VkApiClient vkApiClient, GroupActor groupActor) {
@@ -29,6 +39,10 @@ public class VkService {
         this.ts = getTs();
     }
 
+    /**
+     * Каждые полсекунды метод проверяет чат и если в нём появились новые сообщения –
+     * обрабатывает их и формирует ответ
+     */
     @Scheduled(fixedRate = 500)
     public void processMessages() throws ClientException, ApiException {
         List<MessagePojo> messages = convertVkMessages(getLongPollHistory(ts));

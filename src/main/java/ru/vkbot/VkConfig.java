@@ -9,14 +9,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+/**
+ * Класс с конфигурацией приложения
+ */
 @Configuration
 @PropertySource(value = "classpath:vk.properties")
 @EnableScheduling
 public class VkConfig {
 
+    /**
+     * Достаём ID группы из файла vk.properties
+     */
     @Value("${group.id}")
     private Integer groupId;
 
+    /**
+     * Достаём токен доступа из файла vk.properties
+     */
     @Value("${access.token}")
     private String accessToken;
 
