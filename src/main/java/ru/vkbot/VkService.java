@@ -6,46 +6,53 @@ import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.queries.messages.MessagesGetLongPollHistoryQuery;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Random;
 
 @Service
+@Log4j2
 public class VkService {
 
     private final VkApiClient vkApiClient;
     private final GroupActor groupActor;
+    private Integer ts;
 
     public VkService(VkApiClient vkApiClient, GroupActor groupActor) {
         this.vkApiClient = vkApiClient;
         this.groupActor = groupActor;
+        this.ts = getTs();
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void processMessages() throws ClientException, ApiException, InterruptedException {
-        Integer ts = getTs();
-        while (true) {
-            List<MessagePojo> messages = convertVkMessages(getLongPollHistory(ts));
-            if (!messages.isEmpty()) {
-                messages.forEach(message -> {
-                    String inputMessage = message.getText();
-                    try {
-                        sendMessage("Вы сказали: " + inputMessage, message.getFromId());
-                    } catch (ApiException | ClientException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-            }
-            ts = getTs();
-            Thread.sleep(500);
+    @Scheduled(fixedRate = 500)
+    public void processMessages() throws ClientException, ApiException {
+        List<MessagePojo> messages = convertVkMessages(getLongPollHistory(ts));
+        if (!messages.isEmpty()) {
+            messages.forEach(message -> {
+                log.info("Received message " + message.getId());
+                try {
+                    String responseMessage = processMessage(message.getText());
+                    sendMessage(responseMessage, message.getFromId());
+                } catch (ApiException | ClientException e) {
+                    log.error("Error processing message: " + e.getMessage());
+                }
+            });
         }
+        ts = getTs();
     }
 
-    private Integer getTs() throws ClientException, ApiException {
-        return vkApiClient.messages().getLongPollServer(groupActor).execute().getTs();
+    private Integer getTs() {
+        try {
+            return vkApiClient.messages().getLongPollServer(groupActor).execute().getTs();
+        } catch (ApiException | ClientException e) {
+            log.error("Error getting timestamp: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     private List<Message> getLongPollHistory(Integer ts) throws ApiException, ClientException {
@@ -61,7 +68,11 @@ public class VkService {
         )).toList();
     }
 
-    public void sendMessage(String message, Integer userId) throws ApiException, ClientException {
+    private String processMessage(String message) {
+        return "Вы сказали: " + message;
+    }
+
+    private void sendMessage(String message, Integer userId) throws ApiException, ClientException {
         vkApiClient.messages()
                 .send(groupActor)
                 .message(message)
