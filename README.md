@@ -19,3 +19,7 @@
 #### 3. Запустить приложение   
 - Через IDE
 - Через терминал `$ ./mvnw spring-boot:run`
+
+## Пример работы
+<img src="https://github.com/mibrgmv/VkBot/blob/main/example.png" alt="drawing" width="500"/>
+
